@@ -1,0 +1,18 @@
+#"xdotool mousemove --sync --window `xdotool getwindowfocus` 0 0"
+#      Mod4 + Release
+
+
+# Mapping BACK to mousewheel left on old Logitech
+"xdotool key Alt_L+Left"
+m:0x0 + b:6
+
+# Mapping FORWARD to mousewheel right on old Logitech
+"xdotool key Alt_L+Right"
+m:0x0 + b:7
+
+
+# Map middle click to Refresh tab
+#"xdotool key Alt_L+w"
+#m:0x0 + b:2
+
+

@@ -1,0 +1,33 @@
+[user]
+	name=stephen.wille
+	email=stephen.wille@climate.com
+[pager]
+	branch = false
+
+[color]
+	ui = true
+
+[http]
+	sslVerify = false
+
+[core]
+	excludesfile = ~/.gitignore_global
+	editor = nano
+	autocrlf = input
+
+[alias]
+	s = status --long
+	ci = commit
+	co = checkout
+
+[push]
+	default=current
+
+[branch]
+	autosetuprebase=always
+[credential]
+	helper = cache --timeout=9999999
+[url "https://anongit.kde.org/"]
+	insteadOf = kde:
+[url "git@git.kde.org:"]
+	pushInsteadOf = kde:

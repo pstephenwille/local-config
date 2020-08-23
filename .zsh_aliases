@@ -1,4 +1,16 @@
 #!/bin/zsh
+export ELECTRON_ENABLE_LOGGING=1
+export TARGET_ENV=production
+export CYPRESS_E2E_USER=itp-se@climate.com
+export CYPRESS_E2E_PWD=SETITestAccount!@
+#export TARGET_ENV=production
+#export TCC_ENV=production
+
+# params add qa1.secure.team-btr.itp.CYPRESS_USERNAME woot
+# qa1 internaltools@climate.com SETITestAccount!@
+# btr_test.user+01@climate.com T3st-T3st
+# prod: itp-se@climate.com SETITestAccount!@
+# qa1: itp-f@climate.com SETITestAccount!@
 
 alias cd1="cd .."
 alias cd2="cd ../../"
@@ -11,7 +23,7 @@ alias gpl="git pull"
 alias gl="git log"
 alias gitam='git add -A && git ci --date="now" --am'
 alias gremovemerged='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -d'
-alias suno="sudo nano"
+alias gprune='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -d'alias suno="sudo nano"
 alias s-za="suno ~/local-config/.zsh_aliases"
 alias s-zsh="suno ~/.zshrc"
 alias ll="ls -la"
@@ -21,36 +33,89 @@ alias lsfiles="tree -aphufi"
 #alias b-ssh="sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist && sudo launchctl load /System/Library/LaunchDaemons/s$
 alias lock="pmset displaysleepnow"
 alias myip="host myip.opendns.com resolver1.opendns.com"
+alias ps-node="ps aux|grep node"
+alias killnode="sudo pkill -f node"
+alias lp-pwd=""
+alias docker-prune="docker container  prune -f && docker image prune -f"
+alias b-net="sudo nmcli n off && sudo nmcli n on"
+
+#	TCC
+#alias update-aws="$(envmgr -e ci --region us-east-1 --role btr-general); $(aws ecr get-login --no-include-email --region us-east-1)"
+alias itp-rdi="docker run --rm -it itp-fe bash"
+alias itp-rdc="docker run --rm -v ${PWD}:/tools-portal -p 3000:3000 itp-fe"
+alias itp-bdi="docker build -t itp-fe:latest -f Dockerfile.local ."
+alias itp-run-be="mvn spring-boot:run"
+alias splunk-query='tools-portal-backend | spath "attrs.TCC_ENV" | search "attrs.TCC_ENV"=qa1 "attrs.SERVICE_NAME"="tools-portal-backend"'
+
+function add-evn-param(){
+	params add $1.secure.team-btr.itp.$2 $3
+	# params decrypt qa1.secure.team-btr.itp.CYPRESS_E2E_USER
+}
+
+function updateaws() {
+	$(envmgr -e $1 --region us-east-1 --role btr-general)
+	printenv
+	$(aws ecr get-login --no-include-email --region us-east-1)
+}
+
+function update-run-itp-be {
+	cd ~/Projects/btr/model-maturity-backend
+	mvn clean install -DskipTests
+	updateaws qa1
+	cd ./application
+	mvn spring-boot:run
+}
 
 #   nix
 #pkill -f xbindkeys; xbindkeys &
 
 #sudo launchctl limit maxfiles 65536 2147483000
 
+function grptxt(){
+  grep -iHrn $1 .
+}
+
+function suno(){
+	sudo nano $1
+}
+function update(){
+	sudo apt-get update
+}
+function asearch(){
+	sudo apt-cache search $1
+}
 function install(){
-        sudo apt-get install -y $1
-}
-
-function tcptraffic(){
-	sudo tcpdump -i $1 -va
+	sudo apt-get install -y $1
 }
 
 
 
+function ps-svc {
+	ps aux|grep $1
+}
 
+function install() {
+  sudo apt-get install -y $1
+}
+
+function tcptraffic() {
+  sudo tcpdump -i $1 -va
+}
 
 # NVM
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # bash completion
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"                    # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # bash completion
 
 # Setting PATH for Python 2.7
 # The original version is saved in .bash_profile.pysave
-#PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
-export PATH
+export PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
+# export PATH
 
 # SDKMan
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 . $HOME/.sdkman/bin/sdkman-init.sh
 export SDKMAN_DIR="${HOME}/.sdkman"
 [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
+
+}

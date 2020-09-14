@@ -31,3 +31,5 @@
 	insteadOf = kde:
 [url "git@git.kde.org:"]
 	pushInsteadOf = kde:
+[rerere]
+	enabled = true

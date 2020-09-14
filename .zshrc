@@ -5,6 +5,7 @@
 export ZSH=$HOME/.oh-my-zsh
 export PATH=$HOME/bin:/usr/local/bin:/sbin:/usr/sbin:$PATH
 
+ZSH_DISABLE_COMPFIX="true"
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME

@@ -1,31 +1,32 @@
 #!/bin/zsh
 export ELECTRON_ENABLE_LOGGING=1
-export TARGET_ENV=production
-export CYPRESS_E2E_USER=itp-se@climate.com
-export CYPRESS_E2E_PWD=SETITestAccount!@
 #export TARGET_ENV=production
+#export TARGET_ENV=development
+#export CYPRESS_E2E_USER=itp-se@climate.com
+#export CYPRESS_E2E_PWD=SETITestAccount!@
 #export TCC_ENV=production
 
 # params add qa1.secure.team-btr.itp.CYPRESS_USERNAME woot
 # qa1 internaltools@climate.com SETITestAccount!@
 # btr_test.user+01@climate.com T3st-T3st
 # prod: itp-se@climate.com SETITestAccount!@
-# qa1: itp-f@climate.com SETITestAccount!@
+# qa1: itp-se@climate.com SETITestAccount!@
 
 alias cd1="cd .."
 alias cd2="cd ../../"
 alias cd3="cd ../../../"
 alias cd4="cd ../../../../"
 alias cd5="cd ../../../../../"
+alias suno="sudo nano"
 alias gs="git status"
 alias gr="git remote show origin"
 alias gpl="git pull"
 alias gl="git log"
-alias gitam='git add -A && git ci --date="now" --am'
-alias gremovemerged='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -d'
-alias gprune='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -d'alias suno="sudo nano"
-alias s-za="suno ~/local-config/.zsh_aliases"
-alias s-zsh="suno ~/.zshrc"
+alias gitam='git add -A && git ci --date="now" --am --allow-empty'
+alias gitrmmerged='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -d'
+alias gprune='git branch --merged | egrep -v "(^\*|master|dev)" | xargs git branch -D'
+alias s-za="nano ~/local-config/.zsh_aliases"
+alias s-zsh="nano ~/.zshrc"
 alias ll="ls -la"
 alias lst="ls -lat"
 alias sourcez="source ~/.zshrc"
@@ -35,9 +36,9 @@ alias lock="pmset displaysleepnow"
 alias myip="host myip.opendns.com resolver1.opendns.com"
 alias ps-node="ps aux|grep node"
 alias killnode="sudo pkill -f node"
-alias lp-pwd=""
+alias lp-pwd="p.stephenwille@gmail.com woot"
 alias docker-prune="docker container  prune -f && docker image prune -f"
-alias b-net="sudo nmcli n off && sudo nmcli n on"
+
 
 #	TCC
 #alias update-aws="$(envmgr -e ci --region us-east-1 --role btr-general); $(aws ecr get-login --no-include-email --region us-east-1)"
@@ -46,48 +47,58 @@ alias itp-rdc="docker run --rm -v ${PWD}:/tools-portal -p 3000:3000 itp-fe"
 alias itp-bdi="docker build -t itp-fe:latest -f Dockerfile.local ."
 alias itp-run-be="mvn spring-boot:run"
 alias splunk-query='tools-portal-backend | spath "attrs.TCC_ENV" | search "attrs.TCC_ENV"=qa1 "attrs.SERVICE_NAME"="tools-portal-backend"'
+alias cyspec="yarn run cypress run --browser chrome --headless -C ./cypress/cypress.json --spec "
+
+
+function sonar(){
+sonar-scanner \
+  -Dsonar.projectKey=itp-fe_js-ts-jsx-sass \
+  -Dsonar.sources=. \
+  -Dsonar.host.url=https://sonarqube.ci.tcc.services \
+  -Dsonar.login=050c554140137617e5a6aabeec86fd441a295a4c
+}
 
 function add-evn-param(){
+	#env, param name, value
 	params add $1.secure.team-btr.itp.$2 $3
 	# params decrypt qa1.secure.team-btr.itp.CYPRESS_E2E_USER
 }
+function env-update(){
+        export CYPRESS_E2E_USER=$(params decrypt ${TCC_ENV}.secure.team-btr.itp.CYPRESS_E2E_USER)
+        export CYPRESS_E2E_PWD=$(params decrypt ${TCC_ENV}.secure.team-btr.itp.CYPRESS_E2E_PWD)
 
-function updateaws() {
-	$(envmgr -e $1 --region us-east-1 --role btr-general)
+        export CYPRESS_E2E_TEST_USER=$(params decrypt ${TCC_ENV}.secure.team-btr.itp.CYPRESS_E2E_TEST_USER)
+        export CYPRESS_E2E_TEST_USER_PWD=$(params decrypt ${TCC_ENV}.secure.team-btr.itp.CYPRESS_E2E_TEST_USER_PWD)
+
 	printenv
-	$(aws ecr get-login --no-include-email --region us-east-1)
 }
 
-function update-run-itp-be {
-	cd ~/Projects/btr/model-maturity-backend
+function aws-prod() {
+	$(envmgr -e production --region us-east-1 --role btr-general)
+	$(aws ecr get-login --no-include-email --region us-east-1)
+
+	env-update
+}
+
+function aws-ci() {
+        $(envmgr -e ci --region us-east-1 --role btr-general)
+        $(aws ecr get-login --no-include-email --region us-east-1)
+
+        env-update
+}
+
+function itp-be-start {
+	cd ~/Projects/btr/tools-portal-backend
 	mvn clean install -DskipTests
-	updateaws qa1
+	aws-update $1
 	cd ./application
-	mvn spring-boot:run
+	mvn spring-boot:run -Dspring.profiles.active=${TCC_ENV}
 }
 
 #   nix
 #pkill -f xbindkeys; xbindkeys &
 
-#sudo launchctl limit maxfiles 65536 2147483000
-
-function grptxt(){
-  grep -iHrn $1 .
-}
-
-function suno(){
-	sudo nano $1
-}
-function update(){
-	sudo apt-get update
-}
-function asearch(){
-	sudo apt-cache search $1
-}
-function install(){
-	sudo apt-get install -y $1
-}
-
+sudo launchctl limit maxfiles 65536 2147483000
 
 
 function ps-svc {
@@ -114,8 +125,6 @@ export PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
 
 # SDKMan
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-. $HOME/.sdkman/bin/sdkman-init.sh
-export SDKMAN_DIR="${HOME}/.sdkman"
-[[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
-
-}
+#. $HOME/.sdkman/bin/sdkman-init.sh
+#export SDKMAN_DIR="${HOME}/.sdkman"
+#[[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"

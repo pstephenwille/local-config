@@ -1,4 +1,5 @@
 #!/bin/zsh
+export BROWSER=vivaldi
 export ELECTRON_ENABLE_LOGGING=1
 #export TARGET_ENV=production
 #export TARGET_ENV=development
@@ -34,20 +35,26 @@ alias lsfiles="tree -aphufi"
 #alias b-ssh="sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist && sudo launchctl load /System/Library/LaunchDaemons/s$
 alias lock="pmset displaysleepnow"
 alias myip="host myip.opendns.com resolver1.opendns.com"
-alias ps-node="ps aux|grep node"
-alias killnode="sudo pkill -f node"
+alias psnode="ps aux|grep node"
+alias killallnode="sudo pkill -f node && pgrep node | xargs sudo kill -9"
 alias lp-pwd="p.stephenwille@gmail.com woot"
 alias docker-prune="docker container  prune -f && docker image prune -f"
-
+alias docker-rmi="docker images -a | grep '$1' | awk '{print $3}' | xargs docker rmi"
 
 #	TCC
 #alias update-aws="$(envmgr -e ci --region us-east-1 --role btr-general); $(aws ecr get-login --no-include-email --region us-east-1)"
 alias itp-rdi="docker run --rm -it itp-fe bash"
 alias itp-rdc="docker run --rm -v ${PWD}:/tools-portal -p 3000:3000 itp-fe"
 alias itp-bdi="docker build -t itp-fe:latest -f Dockerfile.local ."
+alias itpbe-units="mvn clean test -Dspring.profiles.active=dev -DexcludedGroups=TestWithTestContainer -DGroups=woot"
+alias itpbe-int="mvn clean verify -Dspring.profiles.active=production -DexcludedGroups=TestWithTestContainer -DSTACK=BLUE -DGroups=$1"
 alias itp-run-be="mvn spring-boot:run"
-alias splunk-query='tools-portal-backend | spath "attrs.TCC_ENV" | search "attrs.TCC_ENV"=qa1 "attrs.SERVICE_NAME"="tools-portal-backend"'
-alias cyspec="yarn run cypress run --browser chrome --headless -C ./cypress/cypress.json --spec "
+alias splunk-query='tools-portal-backend | spath "attrs.TCC_ENV" | search "attrs.TCC_ENV"="production" "attrs.SERVICE_NAME"="tools-portal-backend"'
+alias cyspec="yarn run cypress run --browser chrome --headless -C ./cypress/cypress-units.json --spec "
+
+export PROXY_USERNAME=phillip.wille
+export PROXY_PASSWORD="okta2Y@rB19S"
+
 
 
 function sonar(){
@@ -74,17 +81,28 @@ function env-update(){
 }
 
 function aws-prod() {
-	$(envmgr -e production --region us-east-1 --role btr-general)
-	$(aws ecr get-login --no-include-email --region us-east-1)
+  $(envmgr -e production --region us-east-1 --role btr-general)
+ 	aws ecr get-login-password --region us-east-1 | \
+	docker login --username AWS \
+	--password-stdin 747953286079.dkr.ecr.us-east-1.amazonaws.com
 
 	env-update
 }
 
 function aws-ci() {
         $(envmgr -e ci --region us-east-1 --role btr-general)
-        $(aws ecr get-login --no-include-email --region us-east-1)
+      	aws ecr get-login-password --region us-east-1 | \
+      	docker login --username AWS \
+      	--password-stdin 747953286079.dkr.ecr.us-east-1.amazonaws.com
 
         env-update
+}
+
+function climate-proxy() {
+    docker run --rm -p 3128:3128 --name local-proxy -d \
+    -e PROXY_USERNAME=$PROXY_USERNAME \
+    -e PROXY_PASSWORD=$PROXY_PASSWORD \
+    -it 747953286079.dkr.ecr.us-east-1.amazonaws.com/cloudeng/local-proxy
 }
 
 function itp-be-start {
@@ -94,6 +112,20 @@ function itp-be-start {
 	cd ./application
 	mvn spring-boot:run -Dspring.profiles.active=${TCC_ENV}
 }
+
+# FVWeb
+function fvweb-setup(){
+        eval `envmgr -e ci --region us-east-1 --role phasr_enhanced-developer`
+        aws ecr get-login-password --region us-east-1 | \
+        docker login --username AWS \
+        --password-stdin 747953286079.dkr.ecr.us-east-1.amazonaws.com
+
+        env-update
+
+	params decrypt qa1.rds.fvcab.fieldviewplusPrecisionWebDbUser
+	params decrypt qa1.rds.fvcab.fieldviewplusPrecisionWebDbPassword
+}
+
 
 #   nix
 #pkill -f xbindkeys; xbindkeys &
@@ -125,6 +157,6 @@ export PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
 
 # SDKMan
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-#. $HOME/.sdkman/bin/sdkman-init.sh
+#. Users/stephen.wille/.sdkman/bin/sdkman-init.sh
 #export SDKMAN_DIR="${HOME}/.sdkman"
 #[[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
